@@ -4,13 +4,13 @@ WORKDIR /ros2_ws
 
 COPY src/ src/
 
-RUN apt-get update && \
+RUN apt-get update -q && \
     rosdep update && \
-    rosdep install --from-paths src --ignore-src -r -y
+    rosdep install --from-paths src --ignore-src -r -y --rosdistro humble
 
-RUN . /opt/ros/humble/setup.sh && \
-    colcon build --packages-select my_robot_pkg
+RUN /bin/bash -c ". /opt/ros/humble/setup.bash && \
+    colcon build --packages-select my_robot_pkg"
 
-RUN echo "source /ros2_ws/install/setup.bash" >> ~/.bashrc
+RUN echo "source /ros2_ws/install/setup.bash" >> /ros_entrypoint.sh
 
-CMD ["ros2", "run", "my_robot_pkg", "robot_node"]
+ENTRYPOINT ["/bin/bash", "-c", "source /opt/ros/humble/setup.bash && source /ros2_ws/install/setup.bash && ros2 run my_robot_pkg robot_node"]

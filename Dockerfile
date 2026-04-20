@@ -1,3 +1,5 @@
+FROM ros:humble-ros-base
+
 WORKDIR /ros2_ws
 
 COPY src/ src/

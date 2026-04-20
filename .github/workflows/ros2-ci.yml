@@ -1,0 +1,67 @@
+name: ROS 2 CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    name: Build and Test ROS 2 Package
+    runs-on: ubuntu-22.04
+    container:
+      image: ros:humble-ros-base
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup ROS 2 Environment
+        run: |
+          apt-get update
+          rosdep update
+
+      - name: Install Dependencies
+        run: |
+          rosdep install --from-paths src --ignore-src -r -y
+
+      - name: Build ROS 2 Package
+        run: |
+          . /opt/ros/humble/setup.sh
+          colcon build --packages-select my_robot_pkg
+
+      - name: Run Tests
+        run: |
+          . /opt/ros/humble/setup.sh
+          colcon test --packages-select my_robot_pkg
+          colcon test-result --verbose
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-results
+          path: log/
+
+  build-and-push-docker:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-22.04
+    needs: build-and-test
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: mahesh1303/ros2-robot-pkg:${{ github.run_number }}

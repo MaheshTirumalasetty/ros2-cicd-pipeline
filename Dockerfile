@@ -9,9 +9,9 @@ RUN apt-get update -q && \
     rosdep install --from-paths src --ignore-src -r -y --rosdistro humble
 
 RUN /bin/bash -c ". /opt/ros/humble/setup.bash && \
-    colcon build --packages-select my_robot_pkg && \
-    . install/setup.bash"
+    colcon build --packages-select my_robot_pkg"
 
-SHELL ["/bin/bash", "-c"]
-
-CMD ["/bin/bash", "-c", "source /opt/ros/humble/setup.bash && source /ros2_ws/install/setup.bash && ros2 run my_robot_pkg robot_node"]
+CMD ["/bin/bash", "-c", "source /opt/ros/humble/setup.bash && \
+    source /ros2_ws/install/setup.bash && \
+    source /ros2_ws/install/my_robot_pkg/share/my_robot_pkg/package.bash && \
+    /ros2_ws/install/my_robot_pkg/bin/robot_node"]
